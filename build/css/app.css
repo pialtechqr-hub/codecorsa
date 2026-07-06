@@ -1517,7 +1517,7 @@ input::placeholder {
 
 .hero {
   position: relative;
-  background-image: url("/codecorsa/build/img/hero/hero.jpg");
+  background-image: url("/build/img/hero/hero.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -1532,7 +1532,7 @@ input::placeholder {
 }
 @media (max-width: 630px) {
   .hero {
-    background-image: url("/codecorsa/build/img/hero/hero-movil.jpg");
+    background-image: url("/build/img/hero/hero-movil.jpg");
   }
 }
 
