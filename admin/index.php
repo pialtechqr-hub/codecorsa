@@ -12,8 +12,10 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
     if($id) {
 
         // Obtener imagen
-        $query = "SELECT imagen FROM productos WHERE id = ${id}";
-        $resultado = mysqli_query($db, $query);
+        $stmt = mysqli_prepare($db, "SELECT imagen FROM productos WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'i', $id);
+        mysqli_stmt_execute($stmt);
+        $resultado = mysqli_stmt_get_result($stmt);
         $producto = mysqli_fetch_assoc($resultado);
 
         // Eliminar imagen
@@ -22,10 +24,12 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Eliminar registro
-        $query = "DELETE FROM productos WHERE id = ${id}";
-        mysqli_query($db, $query);
+        $stmtDelete = mysqli_prepare($db, "DELETE FROM productos WHERE id = ?");
+        mysqli_stmt_bind_param($stmtDelete, 'i', $id);
+        mysqli_stmt_execute($stmtDelete);
 
         header('Location: /admin');
+        exit;
     }
 }
 

@@ -4,7 +4,7 @@ require '../../includes/app.php';
 estaAutenticado();
 
 // Validar ID
-$id = $_GET['id'];
+$id = $_GET['id'] ?? null;
 $id = filter_var($id, FILTER_VALIDATE_INT);
 
 if(!$id) {
@@ -20,8 +20,10 @@ if(isset($_GET['eliminar_img'])) {
     if($img_id) {
 
         // Obtener imagen
-        $query = "SELECT imagen FROM producto_imagenes WHERE id = $img_id";
-        $res = mysqli_query($db, $query);
+        $stmt = mysqli_prepare($db, "SELECT imagen FROM producto_imagenes WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'i', $img_id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
         $img = mysqli_fetch_assoc($res);
 
         if($img) {
@@ -31,7 +33,9 @@ if(isset($_GET['eliminar_img'])) {
                 unlink($ruta);
             }
 
-            mysqli_query($db, "DELETE FROM producto_imagenes WHERE id = $img_id");
+            $stmtDel = mysqli_prepare($db, "DELETE FROM producto_imagenes WHERE id = ?");
+            mysqli_stmt_bind_param($stmtDel, 'i', $img_id);
+            mysqli_stmt_execute($stmtDel);
         }
     }
 
@@ -40,8 +44,10 @@ if(isset($_GET['eliminar_img'])) {
 }
 
 // Obtener producto
-$query = "SELECT * FROM productos WHERE id = ${id}";
-$resultado = mysqli_query($db, $query);
+$stmtProd = mysqli_prepare($db, "SELECT * FROM productos WHERE id = ?");
+mysqli_stmt_bind_param($stmtProd, 'i', $id);
+mysqli_stmt_execute($stmtProd);
+$resultado = mysqli_stmt_get_result($stmtProd);
 $producto = mysqli_fetch_assoc($resultado);
 
 if(!$producto) {
@@ -55,8 +61,10 @@ $errores = [];
 $categorias = mysqli_query($db, "SELECT * FROM categorias");
 
 // 🔥 IMÁGENES ACTUALES
-$queryImgs = "SELECT * FROM producto_imagenes WHERE producto_id = $id";
-$resultImgs = mysqli_query($db, $queryImgs);
+$stmtImgs = mysqli_prepare($db, "SELECT * FROM producto_imagenes WHERE producto_id = ?");
+mysqli_stmt_bind_param($stmtImgs, 'i', $id);
+mysqli_stmt_execute($stmtImgs);
+$resultImgs = mysqli_stmt_get_result($stmtImgs);
 
 // Valores
 $nombre = $producto['nombre'];
@@ -70,17 +78,17 @@ $caracteristicas = $producto['caracteristicas'];
 
 if($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $nombre = mysqli_real_escape_string($db, trim($_POST['nombre'] ?? ''));
-    $precio = mysqli_real_escape_string($db, trim($_POST['precio'] ?? ''));
-    $precio_original = mysqli_real_escape_string($db, trim($_POST['precio_original'] ?? ''));
-    $descripcion = mysqli_real_escape_string($db, trim($_POST['descripcion'] ?? ''));
-    $categoria = mysqli_real_escape_string($db, $_POST['categoria'] ?? '');
+    $nombre = trim($_POST['nombre'] ?? '');
+    $precio = trim($_POST['precio'] ?? '');
+    $precio_original = trim($_POST['precio_original'] ?? '');
+    $descripcion = trim($_POST['descripcion'] ?? '');
+    $categoria = $_POST['categoria'] ?? '';
     $categoria_id = $_POST['categoria_id'] ?? '';
-    $stock = mysqli_real_escape_string($db, trim($_POST['stock'] ?? ''));
-    $caracteristicas = mysqli_real_escape_string($db, trim($_POST['caracteristicas'] ?? ''));
+    $stock = trim($_POST['stock'] ?? '');
+    $caracteristicas = trim($_POST['caracteristicas'] ?? '');
 
-    $imagenPrincipal = $_FILES['imagen_principal'];
-    $imagenes = $_FILES['imagenes'];
+    $imagenPrincipal = $_FILES['imagen_principal'] ?? null;
+    $imagenes = $_FILES['imagenes'] ?? ['name' => []];
 
     // Validaciones
     if($nombre === '') $errores[] = "El nombre es obligatorio";
@@ -107,7 +115,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nombreImagen = $producto['imagen'];
 
         // 🔥 Imagen principal
-        if($imagenPrincipal['name']) {
+        if($imagenPrincipal && $imagenPrincipal['name']) {
 
             if(file_exists($carpetaImagenes . $producto['imagen'])) {
                 unlink($carpetaImagenes . $producto['imagen']);
@@ -122,20 +130,34 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // 🔥 UPDATE PRODUCTO
-        $query = "UPDATE productos SET 
-            nombre = '$nombre',
-            precio = '$precio',
-            precio_original = '$precio_original',
-            imagen = '$nombreImagen',
-            descripcion = '$descripcion',
-            categoria = '$categoria',
-            categoria_id = '$categoria_id',
-            stock = '$stock',
-            caracteristicas = '$caracteristicas'
-            WHERE id = ${id}
-        ";
+        $stmtUpdate = mysqli_prepare($db, "UPDATE productos SET 
+            nombre = ?,
+            precio = ?,
+            precio_original = ?,
+            imagen = ?,
+            descripcion = ?,
+            categoria = ?,
+            categoria_id = ?,
+            stock = ?,
+            caracteristicas = ?
+            WHERE id = ?");
 
-        $resultado = mysqli_query($db, $query);
+        mysqli_stmt_bind_param(
+            $stmtUpdate,
+            'sssssssssi',
+            $nombre,
+            $precio,
+            $precio_original,
+            $nombreImagen,
+            $descripcion,
+            $categoria,
+            $categoria_id,
+            $stock,
+            $caracteristicas,
+            $id
+        );
+
+        $resultado = mysqli_stmt_execute($stmtUpdate);
 
         // 🔥 SUBIR GALERÍA (MÚLTIPLE)
         if(!empty($imagenes['name'][0])) {
@@ -151,16 +173,16 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $carpetaImagenes . $nombreImg
                     );
 
-                    $queryImg = "INSERT INTO producto_imagenes (producto_id, imagen)
-                                 VALUES ($id, '$nombreImg')";
-
-                    mysqli_query($db, $queryImg);
+                    $stmtImg = mysqli_prepare($db, "INSERT INTO producto_imagenes (producto_id, imagen) VALUES (?, ?)");
+                    mysqli_stmt_bind_param($stmtImg, 'is', $id, $nombreImg);
+                    mysqli_stmt_execute($stmtImg);
                 }
             }
         }
 
         if($resultado) {
             header('Location: /admin');
+            exit;
         }
     }
 }
@@ -183,19 +205,19 @@ incluirTemplate('header');
 
             <div class="campo">
                 <label>Nombre</label>
-                <input type="text" name="nombre" value="<?php echo $nombre; ?>">
+                <input type="text" name="nombre" value="<?php echo htmlspecialchars($nombre); ?>">
             </div>
 
             <div class="campo-grid">
 
                 <div class="campo">
                     <label>Precio Original</label>
-                    <input type="number" step="0.01" name="precio_original" value="<?php echo $precio_original; ?>">
+                    <input type="number" step="0.01" name="precio_original" value="<?php echo htmlspecialchars($precio_original); ?>">
                 </div>
 
                 <div class="campo">
                     <label>Precio Oferta (opcional)</label>
-                    <input type="number" step="0.01" name="precio" value="<?php echo $precio; ?>">
+                    <input type="number" step="0.01" name="precio" value="<?php echo htmlspecialchars($precio); ?>">
                 </div>
 
             </div>
@@ -203,7 +225,7 @@ incluirTemplate('header');
             <!-- IMAGEN PRINCIPAL -->
             <div class="campo">
                 <label>Imagen Actual</label>
-                <img class="img-preview" src="/imagenes/<?php echo $producto['imagen']; ?>">
+                <img class="img-preview" src="/imagenes/<?php echo htmlspecialchars($producto['imagen']); ?>">
             </div>
 
             <div class="campo">
@@ -221,7 +243,7 @@ incluirTemplate('header');
 
             <div class="campo">
                 <label>Descripción</label>
-                <textarea name="descripcion"><?php echo $descripcion; ?></textarea>
+                <textarea name="descripcion"><?php echo htmlspecialchars($descripcion); ?></textarea>
             </div>
 
         </fieldset>
@@ -230,7 +252,7 @@ incluirTemplate('header');
             <legend>Características</legend>
 
             <div class="campo">
-                <textarea name="caracteristicas"><?php echo $caracteristicas; ?></textarea>
+                <textarea name="caracteristicas"><?php echo htmlspecialchars($caracteristicas); ?></textarea>
             </div>
 
         </fieldset>
@@ -248,7 +270,7 @@ incluirTemplate('header');
                         <?php while($cat = mysqli_fetch_assoc($categorias)): ?>
                             <option value="<?php echo $cat['id']; ?>"
                                 <?php echo ($cat['id'] == $categoria_id) ? 'selected' : ''; ?>>
-                                <?php echo $cat['nombre']; ?>
+                                <?php echo htmlspecialchars($cat['nombre']); ?>
                             </option>
                         <?php endwhile; ?>
                     </select>
@@ -256,12 +278,12 @@ incluirTemplate('header');
 
                 <div class="campo">
                     <label>Stock</label>
-                    <input type="number" name="stock" value="<?php echo $stock; ?>">
+                    <input type="number" name="stock" value="<?php echo htmlspecialchars($stock); ?>">
                 </div>
 
             </div>
 
-            <input type="hidden" name="categoria" value="<?php echo $categoria; ?>">
+            <input type="hidden" name="categoria" value="<?php echo htmlspecialchars($categoria); ?>">
 
         </fieldset>
 
@@ -276,7 +298,7 @@ incluirTemplate('header');
         <div class="miniaturas">
             <?php while($img = mysqli_fetch_assoc($resultImgs)): ?>
                 <div class="img-item">
-                    <img src="/imagenes/<?php echo $img['imagen']; ?>">
+                    <img src="/imagenes/<?php echo htmlspecialchars($img['imagen']); ?>">
 
                     <a href="?id=<?php echo $id; ?>&eliminar_img=<?php echo $img['id']; ?>" 
                        class="btn-eliminar"
