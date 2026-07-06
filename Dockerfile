@@ -6,6 +6,10 @@ RUN docker-php-ext-install mysqli
 # Por si en algún momento se usan URLs amigables
 RUN a2enmod rewrite
 
+# 🔥 Evita que Apache filtre el puerto interno (10000) en redirecciones automáticas
+# como cuando entras a /admin sin la barra final y Apache redirige a /admin/
+RUN echo "UseCanonicalName Off" >> /etc/apache2/apache2.conf
+
 # Copiamos todo el proyecto tal cual está (misma estructura, sin tocar código)
 COPY . /var/www/html/
 
