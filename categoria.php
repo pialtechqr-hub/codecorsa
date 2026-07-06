@@ -12,8 +12,10 @@ if(!$id) {
 }
 
 // Consultar categoría
-$queryCat = "SELECT * FROM categorias WHERE id = ${id}";
-$resCat = mysqli_query($db, $queryCat);
+$stmtCat = mysqli_prepare($db, "SELECT * FROM categorias WHERE id = ?");
+mysqli_stmt_bind_param($stmtCat, 'i', $id);
+mysqli_stmt_execute($stmtCat);
+$resCat = mysqli_stmt_get_result($stmtCat);
 $categoria = mysqli_fetch_assoc($resCat);
 
 if(!$categoria) {
@@ -22,8 +24,10 @@ if(!$categoria) {
 }
 
 // Consultar productos de esa categoría
-$query = "SELECT * FROM productos WHERE categoria_id = ${id}";
-$resultado = mysqli_query($db, $query);
+$stmt = mysqli_prepare($db, "SELECT * FROM productos WHERE categoria_id = ?");
+mysqli_stmt_bind_param($stmt, 'i', $id);
+mysqli_stmt_execute($stmt);
+$resultado = mysqli_stmt_get_result($stmt);
 
 incluirTemplate('header');
 ?>

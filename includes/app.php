@@ -8,7 +8,8 @@ $db = conectarDB();
 function estaAutenticado() {
     session_start();
 
-    if(!$_SESSION['login']) {
+    if(!isset($_SESSION['login']) || !$_SESSION['login']) {
         header('Location: /login.php');
+        exit;
     }
 }
