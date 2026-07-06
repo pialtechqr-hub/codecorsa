@@ -27,7 +27,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
                 session_start();
                 $_SESSION['login'] = true;
 
-                header('Location: /admin');
+                header('Location: /admin/');
             } else {
                 $errores[] = "Password incorrecto";
             }

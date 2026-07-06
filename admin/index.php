@@ -28,7 +28,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
         mysqli_stmt_bind_param($stmtDelete, 'i', $id);
         mysqli_stmt_execute($stmtDelete);
 
-        header('Location: /admin');
+        header('Location: /admin/');
         exit;
     }
 }

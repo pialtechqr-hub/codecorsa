@@ -113,7 +113,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            header('Location: /admin');
+            header('Location: /admin/');
             exit;
         }
     }

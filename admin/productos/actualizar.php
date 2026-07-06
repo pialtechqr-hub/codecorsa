@@ -8,7 +8,7 @@ $id = $_GET['id'] ?? null;
 $id = filter_var($id, FILTER_VALIDATE_INT);
 
 if(!$id) {
-    header('Location: /admin');
+    header('Location: /admin/');
     exit;
 }
 
@@ -51,7 +51,7 @@ $resultado = mysqli_stmt_get_result($stmtProd);
 $producto = mysqli_fetch_assoc($resultado);
 
 if(!$producto) {
-    header('Location: /admin');
+    header('Location: /admin/');
     exit;
 }
 
@@ -181,7 +181,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if($resultado) {
-            header('Location: /admin');
+            header('Location: /admin/');
             exit;
         }
     }
