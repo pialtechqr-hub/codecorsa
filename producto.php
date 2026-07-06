@@ -3,7 +3,7 @@
 require 'includes/app.php';
 
 // Validar ID
-$id = $_GET['id'];
+$id = $_GET['id'] ?? null;
 $id = filter_var($id, FILTER_VALIDATE_INT);
 
 if(!$id) {
@@ -12,8 +12,10 @@ if(!$id) {
 }
 
 // Consultar producto
-$query = "SELECT * FROM productos WHERE id = ${id}";
-$resultado = mysqli_query($db, $query);
+$stmt = mysqli_prepare($db, "SELECT * FROM productos WHERE id = ?");
+mysqli_stmt_bind_param($stmt, 'i', $id);
+mysqli_stmt_execute($stmt);
+$resultado = mysqli_stmt_get_result($stmt);
 $producto = mysqli_fetch_assoc($resultado);
 
 // Si no existe producto
@@ -23,27 +25,32 @@ if(!$producto) {
 }
 
 // 🔥 CONSULTAR GALERÍA
-$queryImgs = "SELECT * FROM producto_imagenes WHERE producto_id = $id";
-$resultImgs = mysqli_query($db, $queryImgs);
+$stmtImgs = mysqli_prepare($db, "SELECT * FROM producto_imagenes WHERE producto_id = ?");
+mysqli_stmt_bind_param($stmtImgs, 'i', $id);
+mysqli_stmt_execute($stmtImgs);
+$resultImgs = mysqli_stmt_get_result($stmtImgs);
 
 // 🔥 PRODUCTOS RELACIONADOS (MEJORADO)
 if(!empty($producto['categoria_id'])) {
 
-    $queryRelacionados = "SELECT * FROM productos 
-    WHERE categoria_id = {$producto['categoria_id']} 
-    AND id != {$producto['id']} 
-    ORDER BY creado DESC
-    LIMIT 8";
+    $stmtRel = mysqli_prepare($db, "SELECT * FROM productos 
+        WHERE categoria_id = ? 
+        AND id != ? 
+        ORDER BY creado DESC
+        LIMIT 8");
+    mysqli_stmt_bind_param($stmtRel, 'ii', $producto['categoria_id'], $producto['id']);
 
 } else {
 
-    $queryRelacionados = "SELECT * FROM productos 
-    WHERE id != {$producto['id']} 
-    ORDER BY creado DESC
-    LIMIT 8";
+    $stmtRel = mysqli_prepare($db, "SELECT * FROM productos 
+        WHERE id != ? 
+        ORDER BY creado DESC
+        LIMIT 8");
+    mysqli_stmt_bind_param($stmtRel, 'i', $producto['id']);
 }
 
-$resultRelacionados = mysqli_query($db, $queryRelacionados);
+mysqli_stmt_execute($stmtRel);
+$resultRelacionados = mysqli_stmt_get_result($stmtRel);
 
 incluirTemplate('header');
 ?>
@@ -56,18 +63,18 @@ incluirTemplate('header');
         <div class="galeria-producto">
 
             <img id="imgPrincipal" 
-                 src="/imagenes/<?php echo $producto['imagen']; ?>" 
+                 src="/imagenes/<?php echo htmlspecialchars($producto['imagen']); ?>" 
                  alt="imagen producto">
 
             <div class="miniaturas">
 
                 <!-- Imagen principal -->
-                <img src="/imagenes/<?php echo $producto['imagen']; ?>" 
+                <img src="/imagenes/<?php echo htmlspecialchars($producto['imagen']); ?>" 
                      onclick="cambiarImagen(this.src)">
 
                 <!-- Imágenes adicionales -->
                 <?php while($img = mysqli_fetch_assoc($resultImgs)): ?>
-                    <img src="/imagenes/<?php echo $img['imagen']; ?>" 
+                    <img src="/imagenes/<?php echo htmlspecialchars($img['imagen']); ?>" 
                          onclick="cambiarImagen(this.src)">
                 <?php endwhile; ?>
 
@@ -78,7 +85,7 @@ incluirTemplate('header');
         <!-- INFO -->
         <div class="detalle-info">
 
-            <h1><?php echo $producto['nombre']; ?></h1>
+            <h1><?php echo htmlspecialchars($producto['nombre']); ?></h1>
 
             <div class="precio-detalle">
 
@@ -115,7 +122,7 @@ incluirTemplate('header');
 
             </div>
 
-            <p><?php echo $producto['descripcion']; ?></p>
+            <p><?php echo htmlspecialchars($producto['descripcion']); ?></p>
 
             <!-- FICHA TÉCNICA -->
             <?php if(!empty($producto['caracteristicas'])): ?>
@@ -131,10 +138,10 @@ incluirTemplate('header');
                         ?>
                             <li>
                                 <?php if(count($partes) === 2): ?>
-                                    <strong><?php echo trim($partes[0]); ?>:</strong>
-                                    <?php echo trim($partes[1]); ?>
+                                    <strong><?php echo htmlspecialchars(trim($partes[0])); ?>:</strong>
+                                    <?php echo htmlspecialchars(trim($partes[1])); ?>
                                 <?php else: ?>
-                                    <?php echo trim($car); ?>
+                                    <?php echo htmlspecialchars(trim($car)); ?>
                                 <?php endif; ?>
                             </li>
                         <?php endforeach; ?>
@@ -193,13 +200,13 @@ incluirTemplate('header');
                 <div class="card-rel">
 
                     <a href="/producto.php?id=<?php echo $rel['id']; ?>">
-                        <img src="/imagenes/<?php echo $rel['imagen']; ?>" alt="">
+                        <img src="/imagenes/<?php echo htmlspecialchars($rel['imagen']); ?>" alt="">
                     </a>
 
-                    <p><?php echo $rel['nombre']; ?></p>
+                    <p><?php echo htmlspecialchars($rel['nombre']); ?></p>
                     <!-- DESCRIPCIÓN -->
                     <p class="descripcion">
-                        <?php echo $producto['descripcion']; ?>
+                        <?php echo htmlspecialchars($producto['descripcion']); ?>
                     </p>
 
                     <?php
