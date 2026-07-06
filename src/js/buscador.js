@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
 
-                const res = await fetch(`/codecorsa/buscar-ajax.php?q=${query}`);
+                const res = await fetch(`/buscar-ajax.php?q=${query}`);
                 const data = await res.json();
 
                 resultados.innerHTML = '';
@@ -35,11 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 data.forEach(prod => {
 
                     const item = document.createElement('a');
-                    item.href = `/codecorsa/producto.php?id=${prod.id}`;
+                    item.href = `/producto.php?id=${prod.id}`;
                     item.classList.add('resultado-item');
 
                     item.innerHTML = `
-                        <img src="/codecorsa/imagenes/${prod.imagen}">
+                        <img src="/imagenes/${prod.imagen}">
                         <div>
                             <span>${prod.nombre}</span>
                             <span>S/.${prod.precio}</span>

@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function cargarMini() {
         if (!miniContenido) return;
 
-        const res = await fetch('/codecorsa/mini-carrito.php');
+        const res = await fetch('/mini-carrito.php');
         const html = await res.text();
         miniContenido.innerHTML = html;
     }
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function actualizarContador() {
         if (!contador) return;
 
-        const res = await fetch('/codecorsa/mini-carrito.php');
+        const res = await fetch('/mini-carrito.php');
         const html = await res.text();
 
         const temp = document.createElement('div');
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
 
-                const res = await fetch('/codecorsa/agregar-carrito.php', {
+                const res = await fetch('/agregar-carrito.php', {
                     method: 'POST',
                     body: data
                 });
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const id = e.target.dataset.id;
 
-            await fetch('/codecorsa/eliminar-carrito.php', {
+            await fetch('/eliminar-carrito.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `id=${id}`

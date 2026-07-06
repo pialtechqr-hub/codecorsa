@@ -3,7 +3,7 @@
 .hero {
     position: relative;
 
-    background-image: url('/codecorsa/build/img/hero/hero.jpg');
+    background-image: url('/build/img/hero/hero.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -19,7 +19,7 @@
     }
 
     @media (max-width: 630px) {
-            background-image: url('/codecorsa/build/img/hero/hero-movil.jpg');
+            background-image: url('/build/img/hero/hero-movil.jpg');
         }
     
 
